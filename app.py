@@ -16,12 +16,16 @@ VECTOR_DIR = "vectorstore/index"
 
 # 毎回ベクトルDBを作り直す場合は True
 ALWAYS_REBUILD = True
+
+# Dockerコンテナ間通信用のURL設定（ローカル実行時はlocalhostになる）
+OLLAMA_URL = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 # ===========================================================
 
 
 # ---------- ベクトルDB作成 ----------
 def load_or_create_vectorstore():
-    embeddings = OllamaEmbeddings(model="llama3")
+    # base_url を追加
+    embeddings = OllamaEmbeddings(model="llama3", base_url=OLLAMA_URL)
 
     # ALWAYS_REBUILD の場合は毎回削除して作り直す
     if ALWAYS_REBUILD and os.path.exists(VECTOR_DIR):
@@ -74,7 +78,8 @@ def answer_question(query):
     docs = vectorstore.similarity_search(query, k=3)
     context = "\n".join([d.page_content for d in docs])
 
-    model = OllamaLLM(model="elyza-jp")
+    # base_url を追加
+    model = OllamaLLM(model="elyza-jp", base_url=OLLAMA_URL)
 
     prompt = f"""
 以下の資料内容を使って質問に答えてください。
@@ -105,4 +110,5 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # ここが重要: host="0.0.0.0" を指定することでDocker外からアクセス可能になる
+    app.run(host="0.0.0.0", port=5000, debug=True)

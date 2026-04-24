@@ -1,0 +1,6 @@
+flask
+langchain
+langchain-community
+langchain-ollama
+faiss-cpu
+numpy
