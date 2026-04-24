@@ -1,0 +1,102 @@
+/* --- ベースの設定 --- */
+body {
+    margin: 0;
+    font-family: "Helvetica", "Arial", sans-serif;
+    background-color: #111;
+    color: #fff;
+    font-size: 18px; /* 全体の基準をさらにアップ */
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.chat-box {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* メッセージ間の距離を広げてスッキリ */
+}
+
+/* メッセージ共通 */
+.message {
+    max-width: 80%; /* PCでも少し広めに */
+    padding: 14px 20px; /* 中の余白をたっぷり */
+    border-radius: 20px;
+    font-size: 19px; /* ★ 17pxから19pxへアップ */
+    line-height: 1.6em; /* 行間も広げて読みやすく */
+    word-wrap: break-word;
+}
+
+/* 相手側 */
+.message.other {
+    background-color: #2a2a2a;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+/* 自分側 */
+.message.me {
+    background-color: #7dd97c;
+    align-self: flex-end;
+    color: #000;
+    border-bottom-right-radius: 4px;
+}
+
+/* 入力エリア */
+.input-area {
+    display: flex;
+    padding: 15px;
+    background-color: #1a1a1a;
+    border-top: 1px solid #333;
+    align-items: center;
+}
+
+#user-input {
+    flex: 1;
+    padding: 15px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background-color: #333;
+    color: #fff;
+    font-size: 18px; /* ★ 入力文字も18pxにアップ */
+}
+
+#send-btn {
+    margin-left: 12px;
+    padding: 15px 24px;
+    border: none;
+    background-color: #5ac75a;
+    color: #000;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 18px; /* ★ ボタンの文字も大きく */
+}
+
+/* --- レスポンシブ対応（スマホ向け） --- */
+@media (max-width: 768px) {
+    .chat-box {
+        padding: 12px;
+    }
+
+    .message {
+        max-width: 90%; /* スマホではほぼ横いっぱいに */
+        font-size: 18px; /* スマホでもしっかり大きく */
+        padding: 12px 16px;
+    }
+
+    #user-input {
+        font-size: 17px; /* iPhoneのズーム防止＋読みやすさ */
+    }
+
+    #send-btn {
+        padding: 12px 18px;
+        font-size: 16px;
+    }
+}
