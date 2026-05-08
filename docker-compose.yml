@@ -8,8 +8,7 @@ services:
     environment:
       - OLLAMA_HOST=http://ollama:11434
     depends_on:
-      ollama:
-        condition: service_healthy
+      - ollama
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:5000/"]
@@ -24,12 +23,6 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 10s
-      timeout: 10s
-      retries: 20
-      start_period: 60s
 
 volumes:
   ollama_data:
