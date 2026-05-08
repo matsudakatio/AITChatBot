@@ -15,7 +15,7 @@ TEXT_DIR = "data/texts"
 VECTOR_DIR = "vectorstore/index"
 
 # 毎回ベクトルDBを作り直す場合は True
-ALWAYS_REBUILD = True
+ALWAYS_REBUILD = False
 
 # Dockerコンテナ間通信用のURL設定（ローカル実行時はlocalhostになる）
 OLLAMA_URL = os.getenv("OLLAMA_HOST", "http://localhost:11434")

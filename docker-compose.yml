@@ -3,6 +3,8 @@ services:
     build: .
     ports:
       - "${WEB_PORT:-5001}:5000"
+    volumes:
+      - vectorstore_data:/app/vectorstore
     environment:
       - OLLAMA_HOST=http://ollama:11434
     restart: unless-stopped
@@ -22,3 +24,4 @@ services:
 
 volumes:
   ollama_data:
+  vectorstore_data:
