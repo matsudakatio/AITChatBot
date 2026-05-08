@@ -91,7 +91,7 @@ def answer_question(query):
 {query}
 """
 
-    return model(prompt)
+    return model.invoke(prompt)
 
 
 # ---------- API ----------
