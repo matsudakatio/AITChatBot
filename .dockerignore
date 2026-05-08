@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+vectorstore/
+.git/
+.DS_Store
+.env
+text1.txt
+text2.txt

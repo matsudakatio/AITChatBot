@@ -1,0 +1,13 @@
+# ローカル開発用（docker compose up で自動適用される）
+# コードを変更するとコンテナに即時反映される
+
+version: '3.8'
+
+services:
+  web:
+    volumes:
+      - .:/app        # ホストのコードをそのままマウント（ホットリロード）
+      - /app/__pycache__  # __pycache__ はコンテナ側を使う
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
