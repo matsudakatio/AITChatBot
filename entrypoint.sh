@@ -8,7 +8,7 @@ done
 echo "Ollama 起動確認OK"
 
 # モデルが存在しない場合のみダウンロード
-for MODEL in llama3 elyza-jp; do
+for MODEL in llama3; do
   if ! curl -sf "${OLLAMA_HOST:-http://ollama:11434}/api/tags" | grep -q "\"${MODEL}\""; then
     echo "${MODEL} をダウンロード中... (数分かかる場合があります)"
     curl -sf "${OLLAMA_HOST:-http://ollama:11434}/api/pull" \

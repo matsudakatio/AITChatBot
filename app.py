@@ -79,7 +79,7 @@ def answer_question(query):
     context = "\n".join([d.page_content for d in docs])
 
     # base_url を追加
-    model = OllamaLLM(model="elyza-jp", base_url=OLLAMA_URL)
+    model = OllamaLLM(model="llama3", base_url=OLLAMA_URL)
 
     prompt = f"""
 以下の資料内容を使って質問に答えてください。
