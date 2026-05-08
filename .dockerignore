@@ -4,7 +4,7 @@ __pycache__/
 venv/
 vectorstore/
 .git/
+.gitignore
 .DS_Store
 .env
-text1.txt
-text2.txt
+README.md

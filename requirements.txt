@@ -1,6 +1,6 @@
-flask
-langchain
-langchain-community
-langchain-ollama
-faiss-cpu
-numpy
+flask>=3.0,<4.0
+langchain>=0.3,<0.4
+langchain-community>=0.3,<0.4
+langchain-ollama>=0.2,<0.3
+faiss-cpu>=1.9,<2.0
+numpy>=1.26,<3.0

@@ -7,12 +7,10 @@ services:
       - vectorstore_data:/app/vectorstore
     environment:
       - OLLAMA_HOST=http://ollama:11434
+      - EMBED_MODEL=llama3
+      - LLM_MODEL=elyza-jp
+      - ALWAYS_REBUILD=false
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:5000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   ollama:
     image: ollama/ollama:latest

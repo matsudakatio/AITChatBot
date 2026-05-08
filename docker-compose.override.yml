@@ -1,11 +1,12 @@
-# ローカル開発用（docker compose up で自動適用される）
-# コードを変更するとコンテナに即時反映される
+# ローカル開発用設定（docker compose up で自動適用される）
+# 研究室Macで本番モードで動かしたいときは
+#   docker compose -f docker-compose.yml up -d --build
+# のように override を読み込まないコマンドを使う
 
 services:
   web:
     volumes:
-      - .:/app        # ホストのコードをそのままマウント（ホットリロード）
-      - /app/__pycache__  # __pycache__ はコンテナ側を使う
+      - .:/app
+      - vectorstore_data:/app/vectorstore
     environment:
-      - FLASK_ENV=development
       - FLASK_DEBUG=1

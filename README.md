@@ -1,107 +1,107 @@
 # AITChatBot
 
-## 構成
+学内資料を使って質問に答えるローカルRAGチャットボット。
 
-```
-AITChatBot/
-├── app.py                      # Flaskアプリ本体
-├── data/texts/                 # 学内資料テキスト
-├── static/                     # フロントエンド
-├── utils/
-├── Dockerfile
-├── docker-compose.yml          # 本番（研究室Mac）用
-├── docker-compose.override.yml # ローカル開発用（自動適用）
-└── entrypoint.sh               # 起動時にOllamaモデルを自動DL
-```
+## アーキテクチャ
 
----
+| 層 | 技術 | 役割 |
+|---|---|---|
+| フロント | HTML/CSS/JS | チャットUI（`static/`） |
+| バックエンド | Flask + LangChain | API・RAG制御（`app.py`） |
+| ベクトルDB | FAISS | 学内資料を意味検索可能な形で保存 |
+| LLM | Ollama（`llama3` + `elyza-jp`） | 埋め込み生成・回答生成 |
+| 基盤 | Docker Compose | 上記をコンテナで連携 |
 
-## 開発メンバーのセットアップ
+`elyza-jp` は HuggingFace の `elyza/Llama-3-ELYZA-JP-8B-GGUF` を Ollama にプルしてエイリアスしたものを使う。`entrypoint.sh` が起動時に自動で準備する。
 
-### 前提
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) がインストール済み
-- Git が使える
+## 必要環境
 
-### 手順
+- Docker Desktop
+- Git
+
+## セットアップ（共通）
 
 ```bash
-# 1. リポジトリをクローン
 git clone https://github.com/matsudakatio/AITChatBot.git
 cd AITChatBot
-
-# 2. 環境設定（必要なら変更）
 cp .env.example .env
+```
 
-# 3. 起動（初回はOllamaモデルのダウンロードで数分かかる）
+## 起動方法
+
+### ローカル開発（自分のPC）
+
+ホットリロード有効・コードを編集すると即反映：
+
+```bash
 docker compose up --build
-
-# 4. ブラウザで確認
-# http://localhost:5001
 ```
 
-### 開発時のワークフロー
+ブラウザで <http://localhost:5001>。
+
+### 研究室Mac（本番運用）
+
+バックグラウンドで実行・自動再起動：
 
 ```bash
-# コードを変更 → 自動でコンテナに反映（override.ymlのvolumeマウントのおかげ）
-# app.py を変更した場合はFlaskが自動リロード
-
-# コンテナのログを見る
-docker compose logs -f web
-
-# 停止
-docker compose down
-```
-
----
-
-## 研究室Mac（本番）での運用
-
-### 起動方法
-
-```bash
-# overrideなし（本番モード）で起動
 docker compose -f docker-compose.yml up -d --build
-
-# ログ確認
-docker compose logs -f
-
-# 停止
-docker compose down
+docker compose logs -f          # 起動状況を確認
 ```
 
-### 家・外出先からアクセスする方法
+初回はOllamaのモデルダウンロードで合計**10〜30分**かかる。完了するとログに以下が出る：
 
-研究室Macに SSH でアクセスできる場合、**ローカルポートフォワーディング**で自分のPCからアクセスできる：
-
-```bash
-# ターミナルで実行（研究室MacのIPアドレスを入力）
-ssh -L 5001:localhost:5001 ユーザー名@研究室MacのIPアドレス
-
-# 接続後、ブラウザで
-# http://localhost:5001 にアクセスするとチャットボットが使える
+```
+[entrypoint] elyza-jp のセットアップ完了
+[entrypoint] Flaskアプリを起動します
+ * Running on http://0.0.0.0:5000
 ```
 
----
+## 家から研究室Macへ接続
 
-## Gitでのコード管理
+Tailscale経由でSSHトンネルを張る：
 
 ```bash
-# 変更をコミット・プッシュ
+# 研究室Mac側でTailscale IPを確認
+tailscale ip -4
+
+# 自分のPCで実行（IPは置き換える）
+ssh -L 5001:localhost:5001 mizunolabo@100.x.x.x
+```
+
+接続したまま、ブラウザで <http://localhost:5001>。
+
+## 開発ワークフロー
+
+```bash
+# 自分のPCで編集 → コミット
 git add .
-git commit -m "変更内容の説明"
+git commit -m "変更内容"
 git push
 
-# 研究室Mac側で最新コードを取得して再起動
+# 研究室Macで反映
 git pull
 docker compose -f docker-compose.yml up -d --build
 ```
 
----
+## ベクトルDBを作り直したい場合
+
+`data/texts/` のテキストを変更したあとは：
+
+```bash
+docker compose -f docker-compose.yml down -v
+docker compose -f docker-compose.yml up -d --build
+```
+
+## 停止
+
+```bash
+docker compose -f docker-compose.yml down
+```
 
 ## トラブルシューティング
 
 | 症状 | 対処 |
-|------|------|
-| 起動に時間がかかる | 初回はOllamaモデル（数GB）をダウンロード中。ログで確認 |
-| `http://localhost:5001` につながらない | `docker compose ps` でコンテナが起動中か確認 |
-| モデルが見つからないエラー | `docker compose restart web` で再起動 |
+|---|---|
+| 初回起動が終わらない | モデルDL中。`docker compose logs -f web` で進捗を確認 |
+| `model not found` | `docker exec aitchatbot-ollama-1 ollama list` で確認・再ビルド |
+| メモリ不足で落ちる | Docker Desktop の Settings → Resources で割当メモリを増やす（推奨16GB以上） |
