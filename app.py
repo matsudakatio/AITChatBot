@@ -2,6 +2,7 @@ import os
 import shutil
 
 from flask import Flask, request, jsonify
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
@@ -9,6 +10,7 @@ from langchain_ollama import OllamaEmbeddings, OllamaLLM
 
 # === 設定 =================================================================
 TEXT_DIR = "data/texts"
+PDF_DIR = "data/pdfs"
 VECTOR_DIR = "vectorstore/index"
 
 OLLAMA_URL = os.getenv("OLLAMA_HOST", "http://localhost:11434")
@@ -36,17 +38,35 @@ def load_or_create_vectorstore():
             VECTOR_DIR, embeddings, allow_dangerous_deserialization=True
         )
 
-    print("テキストを読み込んでベクトルDBを新規作成します")
-    docs = []
-    for file in sorted(os.listdir(TEXT_DIR)):
-        if file.lower().endswith(".txt"):
-            path = os.path.join(TEXT_DIR, file)
-            print(f"  読込: {file}")
-            with open(path, "r", encoding="utf-8") as f:
-                docs.append(f.read())
-
+    print("資料を読み込んでベクトルDBを新規作成します")
     splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200)
-    chunks = splitter.create_documents(docs)
+    chunks = []
+
+    if os.path.isdir(TEXT_DIR):
+        for file in sorted(os.listdir(TEXT_DIR)):
+            if file.lower().endswith(".txt"):
+                path = os.path.join(TEXT_DIR, file)
+                print(f"  読込(txt): {file}")
+                with open(path, "r", encoding="utf-8") as f:
+                    chunks.extend(
+                        splitter.create_documents(
+                            [f.read()], metadatas=[{"source": file}]
+                        )
+                    )
+
+    if os.path.isdir(PDF_DIR):
+        for file in sorted(os.listdir(PDF_DIR)):
+            if file.lower().endswith(".pdf"):
+                path = os.path.join(PDF_DIR, file)
+                print(f"  読込(pdf): {file}")
+                pages = PyPDFLoader(path).load()
+                chunks.extend(splitter.split_documents(pages))
+
+    if not chunks:
+        raise RuntimeError(
+            f"学習データが見つかりません ({TEXT_DIR} / {PDF_DIR})"
+        )
+    print(f"  チャンク数: {len(chunks)}")
 
     vectorstore = FAISS.from_documents(chunks, embeddings)
     os.makedirs(os.path.dirname(VECTOR_DIR), exist_ok=True)

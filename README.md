@@ -83,9 +83,16 @@ git pull
 docker compose -f docker-compose.yml up -d --build
 ```
 
+## 学習データの追加
+
+- テキストファイル → `data/texts/` に `.txt` を置く
+- PDF → `data/pdfs/` に `.pdf` を置く
+
+両ディレクトリの中身を起動時に自動でベクトルDBに取り込みます。
+
 ## ベクトルDBを作り直したい場合
 
-`data/texts/` のテキストを変更したあとは：
+`data/texts/` や `data/pdfs/` を変更したあとは：
 
 ```bash
 docker compose -f docker-compose.yml down -v
