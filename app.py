@@ -14,7 +14,7 @@ PDF_DIR = "data/pdfs"
 VECTOR_DIR = "vectorstore/index"
 
 OLLAMA_URL = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "llama3")
+EMBED_MODEL = os.getenv("EMBED_MODEL", "bge-m3")
 LLM_MODEL = os.getenv("LLM_MODEL", "elyza-jp")
 
 # data/texts を変えたあと再構築したい場合は環境変数で True にする
@@ -76,15 +76,17 @@ def load_or_create_vectorstore():
 
 
 vectorstore = load_or_create_vectorstore()
-llm = OllamaLLM(model=LLM_MODEL, base_url=OLLAMA_URL)
+llm = OllamaLLM(model=LLM_MODEL, base_url=OLLAMA_URL, temperature=0)
 
 
 def answer_question(query: str) -> str:
-    docs = vectorstore.similarity_search(query, k=3)
+    docs = vectorstore.similarity_search(query, k=5)
     context = "\n".join(d.page_content for d in docs)
 
-    prompt = f"""以下の資料内容を使って質問に答えてください。
-資料に書かれていないことは推測せず「資料には記載がありません」と答えてください。
+    prompt = f"""あなたは大学の学生窓口アシスタントです。
+以下の【資料】だけを根拠に、質問へ日本語で具体的に答えてください。
+資料に該当する情報があれば、必ずその内容を答えること。
+どうしても資料に情報が無い場合のみ「資料には記載がありません」と答えてください。
 
 【資料】
 {context}
@@ -121,4 +123,4 @@ def health():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=False)

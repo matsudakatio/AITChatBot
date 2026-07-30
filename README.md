@@ -9,7 +9,7 @@
 | フロント | HTML/CSS/JS | チャットUI（`static/`） |
 | バックエンド | Flask + LangChain | API・RAG制御（`app.py`） |
 | ベクトルDB | FAISS | 学内資料を意味検索可能な形で保存 |
-| LLM | Ollama（`llama3` + `elyza-jp`） | 埋め込み生成・回答生成 |
+| LLM | Ollama（`bge-m3` + `elyza-jp`） | 埋め込み生成・回答生成 |
 | 基盤 | Docker Compose | 上記をコンテナで連携 |
 
 `elyza-jp` は HuggingFace の `elyza/Llama-3-ELYZA-JP-8B-GGUF` を Ollama にプルしてエイリアスしたものを使う。`entrypoint.sh` が起動時に自動で準備する。

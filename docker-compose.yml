@@ -7,7 +7,7 @@ services:
       - vectorstore_data:/app/vectorstore
     environment:
       - OLLAMA_HOST=http://ollama:11434
-      - EMBED_MODEL=llama3
+      - EMBED_MODEL=bge-m3
       - LLM_MODEL=elyza-jp
       - ALWAYS_REBUILD=false
     restart: unless-stopped
