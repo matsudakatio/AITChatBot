@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 
 from flask import Flask, request, jsonify
 from langchain_community.document_loaders import PyPDFLoader
@@ -19,6 +20,14 @@ LLM_MODEL = os.getenv("LLM_MODEL", "elyza-jp")
 
 # data/texts を変えたあと再構築したい場合は環境変数で True にする
 ALWAYS_REBUILD = os.getenv("ALWAYS_REBUILD", "false").lower() == "true"
+
+# 開発時の検証用: True にすると回答に debug 情報（処理時間・出典チャンク・
+# スコアなど）を付与する。リリース時は DEBUG=false（既定）にすれば
+# 一切送られず、画面にもデバッグ表示は出ない。
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+
+# 検索で取得するチャンク数
+TOP_K = int(os.getenv("TOP_K", "5"))
 # =========================================================================
 
 
@@ -79,8 +88,16 @@ vectorstore = load_or_create_vectorstore()
 llm = OllamaLLM(model=LLM_MODEL, base_url=OLLAMA_URL, temperature=0)
 
 
-def answer_question(query: str) -> str:
-    docs = vectorstore.similarity_search(query, k=5)
+def answer_question(query: str):
+    """質問に回答する。戻り値は (answer, debug)。
+    debug は DEBUG=false のとき None。"""
+
+    # --- 1) 検索（埋め込み生成 + 類似度検索） ---
+    t0 = time.perf_counter()
+    scored_docs = vectorstore.similarity_search_with_score(query, k=TOP_K)
+    retrieval_sec = time.perf_counter() - t0
+
+    docs = [d for d, _ in scored_docs]
     context = "\n".join(d.page_content for d in docs)
 
     prompt = f"""あなたは大学の学生窓口アシスタントです。
@@ -96,7 +113,45 @@ def answer_question(query: str) -> str:
 
 【回答】"""
 
-    return llm.invoke(prompt)
+    # --- 2) 生成（LLM 呼び出し） ---
+    t1 = time.perf_counter()
+    answer = llm.invoke(prompt)
+    llm_sec = time.perf_counter() - t1
+
+    if not DEBUG:
+        return answer, None
+
+    # FAISS のスコアは L2 距離（小さいほど類似）
+    sources = []
+    for rank, (doc, score) in enumerate(scored_docs, start=1):
+        content = doc.page_content
+        sources.append(
+            {
+                "rank": rank,
+                "source": doc.metadata.get("source", "?"),
+                "page": doc.metadata.get("page"),
+                "score": round(float(score), 4),
+                "chars": len(content),
+                "snippet": content[:200].replace("\n", " "),
+            }
+        )
+
+    debug = {
+        "timings_sec": {
+            "retrieval": round(retrieval_sec, 3),
+            "llm": round(llm_sec, 3),
+            "total": round(retrieval_sec + llm_sec, 3),
+        },
+        "models": {"embed": EMBED_MODEL, "llm": LLM_MODEL},
+        "retrieval": {
+            "top_k": TOP_K,
+            "context_chars": len(context),
+            "prompt_chars": len(prompt),
+            "query_chars": len(query),
+        },
+        "sources": sources,
+    }
+    return answer, debug
 
 
 @app.route("/ask", methods=["POST"])
@@ -106,7 +161,16 @@ def ask():
     if not query:
         return jsonify({"error": "query is required"}), 400
     try:
-        return jsonify({"answer": answer_question(query)})
+        t_start = time.perf_counter()
+        answer, debug = answer_question(query)
+        payload = {"answer": answer}
+        if debug is not None:
+            # ルート全体（JSON化などを含む）の実測も入れておく
+            debug["timings_sec"]["request_total"] = round(
+                time.perf_counter() - t_start, 3
+            )
+            payload["debug"] = debug
+        return jsonify(payload)
     except Exception as e:
         app.logger.exception("ask failed")
         return jsonify({"error": str(e)}), 500

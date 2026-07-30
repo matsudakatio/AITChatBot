@@ -79,6 +79,106 @@ body {
     font-size: 18px; /* ★ ボタンの文字も大きく */
 }
 
+/* --- デバッグパネル（DEBUG=true のときだけ表示） --- */
+.debug-panel {
+    align-self: flex-start;
+    max-width: 90%;
+    background-color: #161a1f;
+    border: 1px solid #2f3a44;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #cdd6df;
+    font-family: "SFMono-Regular", "Menlo", monospace;
+}
+
+.debug-panel summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #7dd97c;
+    list-style: none;
+}
+
+.debug-panel summary::-webkit-details-marker {
+    display: none;
+}
+
+.debug-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.debug-chip {
+    display: flex;
+    flex-direction: column;
+    background-color: #0e1216;
+    border: 1px solid #2f3a44;
+    border-radius: 8px;
+    padding: 6px 10px;
+    min-width: 70px;
+}
+
+.debug-chip-label {
+    font-size: 11px;
+    color: #8a97a3;
+}
+
+.debug-chip-value {
+    font-size: 15px;
+    color: #fff;
+    font-weight: bold;
+}
+
+.debug-section-title {
+    margin: 10px 0 6px;
+    color: #8a97a3;
+    font-size: 12px;
+}
+
+.debug-source {
+    background-color: #0e1216;
+    border: 1px solid #2f3a44;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+}
+
+.debug-source-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.debug-rank {
+    color: #7dd97c;
+    font-weight: bold;
+}
+
+.debug-src-name {
+    color: #fff;
+}
+
+.debug-score {
+    color: #f0b35b;
+}
+
+.debug-src-chars {
+    color: #8a97a3;
+    font-size: 12px;
+}
+
+.debug-snippet {
+    color: #9aa7b2;
+    font-size: 12.5px;
+    line-height: 1.5em;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 /* --- レスポンシブ対応（スマホ向け） --- */
 @media (max-width: 768px) {
     .chat-box {
