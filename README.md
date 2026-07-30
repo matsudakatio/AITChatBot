@@ -90,6 +90,27 @@ docker compose -f docker-compose.yml up -d --build
 
 両ディレクトリの中身を起動時に自動でベクトルDBに取り込みます。
 
+## 検証用デバッグ表示（開発時のみ）
+
+環境変数 `DEBUG=true` で起動すると、回答の下に検証用パネルが表示されます。
+
+- 処理時間: 検索・生成(LLM)・処理合計・リクエスト全体（秒）
+- 使用モデル: 埋め込み / LLM
+- 検索設定: `top_k`・文脈文字数・プロンプト文字数
+- 参照した資料チャンク: 出典ファイル・ページ・類似度スコア（小さいほど類似）・抜粋
+
+ローカル開発（`docker compose up`）では `docker-compose.override.yml` により
+自動で `DEBUG=true` になります。本番（`docker compose -f docker-compose.yml up`）では
+無効なので、リリース時にパネルは一切表示されません。
+
+ネイティブ起動で有効にする場合:
+
+```bash
+DEBUG=true LLM_MODEL=elyza-jp PORT=5001 python app.py
+```
+
+取得チャンク数は `TOP_K`（既定5）で調整できます。
+
 ## ベクトルDBを作り直したい場合
 
 `data/texts/` や `data/pdfs/` を変更したあとは：

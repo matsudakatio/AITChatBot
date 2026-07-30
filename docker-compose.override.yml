@@ -10,3 +10,6 @@ services:
       - vectorstore_data:/app/vectorstore
     environment:
       - FLASK_DEBUG=1
+      # 開発時は検証用のデバッグ情報（処理時間・出典チャンク・スコア等）を
+      # 画面に表示する。本番(docker-compose.yml)では無効。
+      - DEBUG=true

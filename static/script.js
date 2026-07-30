@@ -11,6 +11,77 @@ function addMessage(text, isUser) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// デバッグ情報の表示（サーバーが DEBUG=true のときだけ debug が届く）
+function addDebug(debug) {
+    if (!debug) return;
+
+    const t = debug.timings_sec || {};
+    const m = debug.models || {};
+    const r = debug.retrieval || {};
+    const sources = debug.sources || [];
+
+    const panel = document.createElement("details");
+    panel.classList.add("debug-panel");
+    panel.open = true;
+
+    const summary = document.createElement("summary");
+    summary.textContent =
+        `🔍 デバッグ情報  合計 ${t.total ?? "-"}s ` +
+        `（検索 ${t.retrieval ?? "-"}s / 生成 ${t.llm ?? "-"}s）`;
+    panel.appendChild(summary);
+
+    // 数値サマリー（チップ表示）
+    const stats = document.createElement("div");
+    stats.classList.add("debug-stats");
+    const chips = [
+        ["検索", `${t.retrieval ?? "-"} s`],
+        ["生成(LLM)", `${t.llm ?? "-"} s`],
+        ["処理合計", `${t.total ?? "-"} s`],
+        ["リクエスト全体", `${t.request_total ?? "-"} s`],
+        ["埋め込み", m.embed ?? "-"],
+        ["LLM", m.llm ?? "-"],
+        ["top_k", r.top_k ?? "-"],
+        ["文脈文字数", r.context_chars ?? "-"],
+        ["プロンプト文字数", r.prompt_chars ?? "-"],
+    ];
+    for (const [label, value] of chips) {
+        const chip = document.createElement("div");
+        chip.classList.add("debug-chip");
+        chip.innerHTML =
+            `<span class="debug-chip-label">${label}</span>` +
+            `<span class="debug-chip-value">${value}</span>`;
+        stats.appendChild(chip);
+    }
+    panel.appendChild(stats);
+
+    // 出典チャンク一覧
+    if (sources.length) {
+        const title = document.createElement("div");
+        title.classList.add("debug-section-title");
+        title.textContent = `参照した資料チャンク（${sources.length}件・スコアが小さいほど類似）`;
+        panel.appendChild(title);
+
+        for (const s of sources) {
+            const item = document.createElement("div");
+            item.classList.add("debug-source");
+            const page = s.page != null ? ` p.${s.page}` : "";
+            item.innerHTML =
+                `<div class="debug-source-head">` +
+                `<span class="debug-rank">#${s.rank}</span>` +
+                `<span class="debug-src-name">${s.source}${page}</span>` +
+                `<span class="debug-score">score ${s.score}</span>` +
+                `<span class="debug-src-chars">${s.chars}文字</span>` +
+                `</div>` +
+                `<div class="debug-snippet"></div>`;
+            item.querySelector(".debug-snippet").textContent = s.snippet;
+            panel.appendChild(item);
+        }
+    }
+
+    chatBox.appendChild(panel);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
 // 送信処理
 async function sendMessage() {
     const text = input.value.trim();
@@ -35,6 +106,9 @@ async function sendMessage() {
         } else {
             addMessage("（返信なし）", false);
         }
+
+        // 開発時（サーバーが DEBUG=true）のみ検証用情報を表示
+        addDebug(data.debug);
     } catch (err) {
         addMessage("（サーバーに接続できません）", false);
     }
