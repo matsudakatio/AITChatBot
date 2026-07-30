@@ -79,6 +79,18 @@ body {
     font-size: 18px; /* ★ ボタンの文字も大きく */
 }
 
+/* --- 「考えています」インジケーター --- */
+.message.thinking {
+    color: #9aa7b2;
+    font-style: italic;
+    animation: thinking-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes thinking-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+}
+
 /* --- デバッグパネル（DEBUG=true のときだけ表示） --- */
 .debug-panel {
     align-self: flex-start;

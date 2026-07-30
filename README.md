@@ -109,7 +109,7 @@ docker compose -f docker-compose.yml up -d --build
 DEBUG=true LLM_MODEL=elyza-jp PORT=5001 python app.py
 ```
 
-取得チャンク数は `TOP_K`（既定5）で調整できます。
+取得チャンク数は `TOP_K`（既定8）で調整できます。
 
 ## ベクトルDBを作り直したい場合
 

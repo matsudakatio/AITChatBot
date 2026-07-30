@@ -82,6 +82,28 @@ function addDebug(debug) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// 「考えています」の経過時間インジケーター
+function startThinking() {
+    const el = document.createElement("div");
+    el.classList.add("message", "other", "thinking");
+    chatBox.appendChild(el);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    const started = Date.now();
+    const render = () => {
+        const sec = ((Date.now() - started) / 1000).toFixed(1);
+        el.textContent = `回答を考えています…（${sec}秒）`;
+    };
+    render();
+    const timer = setInterval(render, 100);
+
+    // 停止して要素を消す
+    return () => {
+        clearInterval(timer);
+        el.remove();
+    };
+}
+
 // 送信処理
 async function sendMessage() {
     const text = input.value.trim();
@@ -90,6 +112,7 @@ async function sendMessage() {
     addMessage(text, true);
     input.value = "";
 
+    const stopThinking = startThinking();
     try {
         const res = await fetch("/ask", {
             method: "POST",
@@ -100,6 +123,7 @@ async function sendMessage() {
         });
 
         const data = await res.json();
+        stopThinking();
 
         if (data.answer) {
             addMessage(data.answer, false);
@@ -110,6 +134,7 @@ async function sendMessage() {
         // 開発時（サーバーが DEBUG=true）のみ検証用情報を表示
         addDebug(data.debug);
     } catch (err) {
+        stopThinking();
         addMessage("（サーバーに接続できません）", false);
     }
 }

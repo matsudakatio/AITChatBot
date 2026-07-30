@@ -5,6 +5,7 @@ import time
 from flask import Flask, request, jsonify
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
 
@@ -27,7 +28,7 @@ ALWAYS_REBUILD = os.getenv("ALWAYS_REBUILD", "false").lower() == "true"
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 # 検索で取得するチャンク数
-TOP_K = int(os.getenv("TOP_K", "5"))
+TOP_K = int(os.getenv("TOP_K", "8"))
 # =========================================================================
 
 
@@ -56,12 +57,20 @@ def load_or_create_vectorstore():
             if file.lower().endswith(".txt"):
                 path = os.path.join(TEXT_DIR, file)
                 print(f"  読込(txt): {file}")
+                # txt は人手で整理された箇条書きの要約なので、1行(箇条書き)を
+                # 1チャンクにする。まとめて800字で切ると「卒業に必要な単位は
+                # 124単位以上」のような1文の要点が他の文に埋もれて検索で拾えなく
+                # なるため、行単位に分割して各事実を検索しやすくする。
                 with open(path, "r", encoding="utf-8") as f:
-                    chunks.extend(
-                        splitter.create_documents(
-                            [f.read()], metadatas=[{"source": file}]
-                        )
-                    )
+                    for line in f:
+                        line = line.strip()
+                        if len(line) >= 5:
+                            chunks.append(
+                                Document(
+                                    page_content=line,
+                                    metadata={"source": file},
+                                )
+                            )
 
     if os.path.isdir(PDF_DIR):
         for file in sorted(os.listdir(PDF_DIR)):
@@ -98,12 +107,18 @@ def answer_question(query: str):
     retrieval_sec = time.perf_counter() - t0
 
     docs = [d for d, _ in scored_docs]
-    context = "\n".join(d.page_content for d in docs)
+    context = "\n---\n".join(d.page_content for d in docs)
 
     prompt = f"""あなたは大学の学生窓口アシスタントです。
 以下の【資料】だけを根拠に、質問へ日本語で具体的に答えてください。
-資料に該当する情報があれば、必ずその内容を答えること。
-どうしても資料に情報が無い場合のみ「資料には記載がありません」と答えてください。
+
+注意:
+- 資料にはPDFの表を崩したデータや、科目区分ごとの小計（例:「必修95単位以上」）が
+  含まれます。合計の単位数を尋ねられた場合は、区分ごとの小計や小計同士の足し算を
+  せず、資料に「計」「合計」「卒業に必要な単位」等として明示された合計値をそのまま
+  答えること。
+- 資料に該当する情報があれば、必ずその内容を答えること。
+- どうしても資料に情報が無い場合のみ「資料には記載がありません」と答えてください。
 
 【資料】
 {context}
